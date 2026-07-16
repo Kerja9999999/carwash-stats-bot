@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GateControl Admin</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:#f5f5f5;
+}
+
+.container{
+    max-width:700px;
+    margin:30px auto;
+    background:#fff;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 0 15px rgba(0,0,0,.15);
+}
+
+h1{
+    text-align:center;
+    margin-bottom:25px;
+}
+
+label{
+    font-weight:bold;
+    display:block;
+    margin-top:15px;
+}
+
+input,select{
+    width:100%;
+    padding:12px;
+    margin-top:6px;
+    border:1px solid #ccc;
+    border-radius:8px;
+}
+
+button{
+    width:100%;
+    padding:15px;
+    margin-top:20px;
+    border:none;
+    border-radius:8px;
+    background:#0b7cff;
+    color:white;
+    font-size:18px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#0069d9;
+}
+
+table{
+    width:100%;
+    margin-top:30px;
+    border-collapse:collapse;
+}
+
+th,td{
+    padding:12px;
+    border-bottom:1px solid #ddd;
+    text-align:left;
+}
+
+.action{
+    cursor:pointer;
+    color:#0b7cff;
+    margin-right:10px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h1>GateControl Admin</h1>
+
+<label>Имя пользователя</label>
+<input id="name">
+
+<label>Телефон</label>
+<input id="phone">
+
+<label>Доступ</label>
+
+<select id="days">
+<option value="1">1 день</option>
+<option value="7">7 дней</option>
+<option value="30">30 дней</option>
+<option value="365">365 дней</option>
+<option value="custom">До даты</option>
+</select>
+
+<input type="date" id="date">
+
+<button onclick="createUser()">
+Создать QR
+</button>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Имя</th>
+<th>До</th>
+<th>Действия</th>
+</tr>
+
+</thead>
+
+<tbody id="users">
+
+</tbody>
+
+</table>
+
+</div>
+
+<script>
+
+async function createUser(){
+
+const body={
+name:document.getElementById("name").value,
+phone:document.getElementById("phone").value,
+days:document.getElementById("days").value,
+date:document.getElementById("date").value
+};
+
+const r=await fetch("/api/create-user",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify(body)
+});
+
+const data=await r.json();
+
+if(data.ok){
+
+window.open(data.qr);
+
+loadUsers();
+
+}else{
+
+alert(data.error);
+
+}
+
+}
+
+async function loadUsers(){
+
+const r=await fetch("/api/users");
+
+const users=await r.json();
+
+const tbody=document.getElementById("users");
+
+tbody.innerHTML="";
+
+users.forEach(u=>{
+
+tbody.innerHTML+=`
+<tr>
+
+<td>${u.name}</td>
+
+<td>${u.expires}</td>
+
+<td>
+
+<span class="action" onclick="window.open('${u.qr}')">QR</span>
+
+<span class="action" onclick="extend('${u.id}')">Продлить</span>
+
+<span class="action" onclick="removeUser('${u.id}')">Удалить</span>
+
+</td>
+
+</tr>
+`;
+
+});
+
+}
+
+loadUsers();
+
+</script>
+
+</body>
+</html>
